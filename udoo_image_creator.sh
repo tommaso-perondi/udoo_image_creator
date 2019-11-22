@@ -1,24 +1,28 @@
 #!/bin/bash
 
 # Script for the realization of the SDcard image and its configuration
-set -ex
+set -e
 
 # Included files
 DIR_MKUDOOBUNTU=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 REQUIRED_HOST_PKG=( qemu-user-static qemu-user qemu-debootstrap )
-source "$DIR_MKUDOOBUNTU/include/imager.sh"
-source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
-source "$DIR_MKUDOOBUNTU/include/set_user_and_root.sh"
-source "$DIR_MKUDOOBUNTU/include/packages.sh"
-source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
-source "$DIR_MKUDOOBUNTU/include/utils/utils.sh"
-source "$DIR_MKUDOOBUNTU/configure/udoo_neo.sh"
+cd $DIR_MKUDOOBUNTU
+source "include/imager.sh"
+source "include/utils/color.sh"
+source "include/set_user_and_root.sh"
+source "include/packages.sh"
+source "include/utils/color.sh"
+source "include/utils/utils.sh"
+source "configure/udoo_neo.sh"
+cd -
 ################################################################################
 
 function check_env() {
     for i in ${REQUIRED_HOST_PKG[@]}
     do
-        if ! dpkg -l $i >/dev/null
+        local PKGLIST=$(dpkg -l)
+        if ! grep -q $i <<< $PKGLIST
+        then
             apt install -y $i
         fi
     done
