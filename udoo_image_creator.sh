@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Script for the realization of the SDcard image and its configuration
+set -ex
 
 # Included files
 DIR_MKUDOOBUNTU=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+REQUIRED_HOST_PKG=( qemu-user-static qemu-user qemu-debootstrap )
 source "$DIR_MKUDOOBUNTU/include/imager.sh"
 source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
 source "$DIR_MKUDOOBUNTU/include/set_user_and_root.sh"
@@ -12,6 +14,15 @@ source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
 source "$DIR_MKUDOOBUNTU/include/utils/utils.sh"
 source "$DIR_MKUDOOBUNTU/configure/udoo_neo.sh"
 ################################################################################
+
+function check_env() {
+    for i in ${REQUIRED_HOST_PKG[@]}
+    do
+        if ! dpkg -l $i >/dev/null
+            apt install -y $i
+        fi
+    done
+}
 
 # The first stage is the function that do the initial operation such as:
 # creating partitions, upload the bootloader, ...
@@ -62,7 +73,7 @@ function second_stage() {
     echo_yellow "Starting second-stage"
 
     # Copy the qemu file
-    cp $DIR_MKUDOOBUNTU/source/qemu-arm/qemu-arm-static mnt/usr/bin
+    cp /usr/bin/qemu-arm-static mnt/usr/bin
 
     # Change root and run the second stage
     chroot mnt/ /bin/bash -c "/debootstrap/debootstrap --second-stage" 2>&1 >> out.log &
@@ -124,6 +135,7 @@ function main() {
 
     echo_yellow "Starting build..."
 
+    check_env
     first_stage $OUTPUT $LOOP
     second_stage $OUTPUT $LOOP
     configuration
