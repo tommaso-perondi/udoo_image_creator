@@ -57,5 +57,5 @@ function write_kernel() {
     mkdir mnt/lib/modules
     cp -r $DIR_IMAGER/../source/kernel/modules/* mnt/lib/modules
 
-    echo_green "Writing kerel and modules: Done!"
+    echo_green "Writing kernel and modules: Done!"
 }
