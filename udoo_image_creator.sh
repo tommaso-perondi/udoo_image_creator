@@ -76,7 +76,18 @@ function second_stage() {
     cp /usr/bin/qemu-arm-static mnt/usr/bin
 
     # Change root and run the second stage
-    chroot mnt/ /bin/bash -c "/debootstrap/debootstrap --second-stage" 2>&1 >> out.log &
+    chroot mnt/ /bin/bash 2>&1 >> out.log & << 'EOF'
+#!/bin/bash
+export LC_ALL=C
+export LANGUAGE=C
+export LANG=C
+export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_PRIORITY=critical
+export DEBCONF_NONINTERACTIVE_SEEN=true
+
+/debootstrap/debootstrap --second-stage
+EOF
+
     local process_pid=$!
     progress_bar $process_pid "second stage"
 

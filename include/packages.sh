@@ -9,7 +9,13 @@ DIR_PACKAGES=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source "$DIR_PACKAGES/utils/color.sh"
 ################################################################################
 
-ROOTFS_CMD_APT_INSTALL="export DEBIAN_FRONTEND=noninteractive; apt-get install -qy -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
+ROOTFS_CMD_APT_INSTALL="export DEBIAN_FRONTEND=noninteractive; \
+export LC_ALL=C; \
+export LANGUAGE=C; \
+export LANG=C; \
+export DEBIAN_PRIORITY=critical; \
+export DEBCONF_NONINTERACTIVE_SEEN=true; \
+apt-get install -qy -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\""
 
 function add_source_list() {
     echo_yellow "Adding source list"
@@ -25,7 +31,7 @@ function add_docker_repo(){
 
 function set_locales(){
     echo_yellow "Setup Locale"
-    chroot mnt/ /bin/bash -c "locale-gen en_US.UTF-8 && dpkg-reconfigure --frontend noninteractive locales && update-locale LANG=en_US.UTF-8"
+    chroot mnt/ /bin/bash -c "export DEBIAN_FRONTEND=noninteractive; locale-gen en_US.UTF-8 && dpkg-reconfigure --frontend noninteractive locales && update-locale LANG=en_US.UTF-8"
 }
 
 function install_packages() {
