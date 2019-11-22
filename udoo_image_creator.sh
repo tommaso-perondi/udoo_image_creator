@@ -47,10 +47,10 @@ function first_stage() {
     write_bootloader $OUTPUT $LOOP
 
     # Mount udoobuntu18_04
-    mkdir mnt 2> /dev/null
+    mkdir -p mnt 2> /dev/null
     mount "${LOOP}p1" mnt/
     # Copy the kernel - from include/imager.sh
-    mkdir mnt/boot/
+    mkdir -p mnt/boot/
     write_kernel $OUTPUT $LOOP
 
     echo_green "Setup complete!"
@@ -107,8 +107,6 @@ function configuration() {
     cp patches/g_multi_setup.sh mnt/etc/rc.local
     chmod +x mnt/etc/rc.local
 
-
-
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
     set_user
@@ -117,14 +115,19 @@ function configuration() {
 }
 
 
-function final_operations() {
+function clean() {
     # Read arguments
     local LOOP=$1
 
-    umount -lf mnt
-    rm -rf mnt
+    if [ -d mnt ]
+    then
+        umount -lf mnt
+        rm -rf mnt
+    fi
     losetup -d "$LOOP"
     sync
+
+    echo_green "Cleaned successfully"
 }
 
 ################################################################################
@@ -136,10 +139,10 @@ function main() {
     echo_yellow "Starting build..."
 
     check_env
+    trap "clean $LOOP" INT TERM KILL
     first_stage $OUTPUT $LOOP
     second_stage $OUTPUT $LOOP
     configuration
-    final_operations $LOOP
 
     echo_green "Build complete!"
 }
