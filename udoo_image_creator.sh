@@ -9,9 +9,9 @@ source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
 source "$DIR_MKUDOOBUNTU/include/set_user_and_root.sh"
 source "$DIR_MKUDOOBUNTU/include/packages.sh"
 source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
+source "$DIR_MKUDOOBUNTU/include/utils/utils.sh"
 source "$DIR_MKUDOOBUNTU/configure/udoo_neo.sh"
 ################################################################################
-
 
 # The first stage is the function that do the initial operation such as:
 # creating partitions, upload the bootloader, ...
@@ -23,9 +23,9 @@ function first_stage() {
 
     echo_yellow "Starting setup"
 
-    # Create the empty image file - 1.5GB
+    # Create the empty image file - 4GB
     echo "Creating the image file $OUTPUT..."
-    ./mkimage $OUTPUT 4
+    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G
     echo_green "Image created!"
     # Associate loop-device with .img file
     losetup $LOOP $OUTPUT || echo_red "Cannot set $LOOP"
@@ -46,9 +46,10 @@ function first_stage() {
 
     # Debootstrap - first_stage
     echo "Starting debootstrap - first stage..."
-    debootstrap --foreign --arch=armhf --verbose bionic mnt/
+    debootstrap --foreign --arch=armhf --verbose bionic mnt/ 2>&1 > out.log &
+    local process_pid=$!
+    progress_bar $process_pid "first stage"
     #tar -C mnt/ -xf ubuntu-base-18.04.3-base-armhf.tar
-    #echo "export PATH=/sbin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:$PATH" >> mnt/root/.bashrc
     echo_green "debootstrap - first_stage: Done!"
 
 }
@@ -64,7 +65,9 @@ function second_stage() {
     cp $DIR_MKUDOOBUNTU/source/qemu-arm/qemu-arm-static mnt/usr/bin
 
     # Change root and run the second stage
-    chroot mnt/ /bin/bash -c "/debootstrap/debootstrap --second-stage"
+    chroot mnt/ /bin/bash -c "/debootstrap/debootstrap --second-stage" 2>&1 >> out.log &
+    local process_pid=$!
+    progress_bar $process_pid "second stage"
 
     echo_green "Debootstrap second-stage completed!"
 }
@@ -77,9 +80,23 @@ function configuration() {
     chroot mnt/ /bin/bash -c "echo \"$HOSTNAME\" > /etc/hostname"
 
     # Install packages - from include/packages.sh
-    add_source_list
-    set_locales
-    install_packages
+    add_source_list >> out.log 2>&1 &
+    local process_pid=$!
+    progress_bar $process_pid "setup source list"
+    set_locales >> out.log 2>&1 &
+    process_pid=$!
+    progress_bar $process_pid "setup locale"
+    install_packages >> out.log 2>&1 &
+    process_pid=$!
+    progress_bar $process_pid "install packages"
+    
+    echo_yellow "Adding resizefs"
+    install -m 755 patches/firstrun  "mnt/etc/init.d"
+    chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults 2>&1 >/dev/null"
+    cp patches/g_multi_setup.sh mnt/etc/rc.local
+    chmod +x mnt/etc/rc.local
+
+
 
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
