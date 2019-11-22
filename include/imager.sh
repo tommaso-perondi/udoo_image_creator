@@ -46,7 +46,7 @@ function write_kernel() {
     local OUTPUT=$1
     local LOOP=$2
 
-    echo "Writing kernel and modules (version 3.14.56)"
+    echo "Writing kernel and modules (version 4.14.78)"
     # Copy the image and the device tree (binary file)
     mkdir mnt/boot/dtbs
     cp $DIR_IMAGER/../source/kernel/zImage mnt/boot
