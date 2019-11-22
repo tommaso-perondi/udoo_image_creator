@@ -5,7 +5,7 @@ set -e
 
 # Included files
 DIR_MKUDOOBUNTU=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-REQUIRED_HOST_PKG=( qemu-user-static qemu-user qemu-debootstrap )
+REQUIRED_HOST_PKG=( qemu-user-static debootstrap )
 cd $DIR_MKUDOOBUNTU
 source "include/imager.sh"
 source "include/utils/color.sh"
