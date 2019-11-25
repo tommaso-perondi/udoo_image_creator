@@ -5,7 +5,9 @@
 # Included script
 DIR_IMAGER=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source "$DIR_IMAGER/utils/utils.sh"
-source "$DIR_IMAGER/utils/color.sh"
+source "$DIR_IMAGER/utils/prints.sh"
+PRINTS_DEBUG=1
+PRINTS_VERBOSE=1
 ################################################################################
 
 function create_partitions() {
@@ -27,7 +29,7 @@ function create_partitions() {
     partprobe $LOOP
     mkfs.ext4 -O '^64bit' -q $LOOP"p1" -L "$LABELFS"
 
-    echo_green "Partitions created in $OUTPUT!"
+    echo_ok "Partitions created in $OUTPUT!"
 }
 
 function write_bootloader() {
@@ -36,9 +38,9 @@ function write_bootloader() {
     local LOOP=$2
 
     echo "Writing U-Boot..."
-    dd if="$DIR_IMAGER/../source/bootloader/SPL" of="$LOOP" bs=1k seek=1
-    dd if="$DIR_IMAGER/../source/bootloader/u-boot.img" of="$LOOP" bs=1k seek=69
-    echo_green "Writing U-Boot: Done!"
+    dd if="$DIR_IMAGER/../source/bootloader/SPL" of="$LOOP" bs=1k seek=1 2>&1 > /dev/null
+    dd if="$DIR_IMAGER/../source/bootloader/u-boot.img" of="$LOOP" bs=1k seek=69 2>&1 > /dev/null
+    echo_ok "Writing U-Boot: Done!"
 }
 
 function write_kernel() {
@@ -57,5 +59,5 @@ function write_kernel() {
     mkdir mnt/lib/modules
     cp -r $DIR_IMAGER/../source/kernel/modules/* mnt/lib/modules
 
-    echo_green "Writing kernel and modules: Done!"
+    echo_ok "Writing kernel and modules: Done!"
 }

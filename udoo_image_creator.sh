@@ -28,6 +28,9 @@ function check_env() {
     done
 }
 
+PRINTS_DEBUG=1
+PRINTS_VERBOSE=1
+
 # The first stage is the function that do the initial operation such as:
 # creating partitions, upload the bootloader, ...
 # Many of its operation are taken from ../include/imager.sh
@@ -42,12 +45,12 @@ function bootstrap() {
     export DEBIAN_FRONTEND=noninteractive
     export DEBCONF_NONINTERACTIVE_SEEN=true
 
-    echo_yellow "Starting setup"
+    echo_i "Starting setup"
 
     # Create the empty image file - 4GB
-    echo "Creating the image file $OUTPUT..."
-    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G
-    echo_green "Image created!"
+    echo_i "Creating the image file $OUTPUT..."
+    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G 2>&1 > /dev/null
+    echo_ok "Image created!"
     # Associate loop-device with .img file
     losetup $LOOP $OUTPUT || echo_red "Cannot set $LOOP"
 
@@ -63,23 +66,23 @@ function bootstrap() {
     mkdir -p mnt/boot/
     write_kernel $OUTPUT $LOOP
 
-    echo_green "Setup complete!"
+    echo_ok "Setup complete!"
 
     # Debootstrap
-    echo "Starting debootstrap ..."
+    echo_i "Starting debootstrap ..."
     qemu-debootstrap --arch=armhf --verbose bionic mnt/ 2>&1 > out.log &
     local process_pid=$!
     progress_bar $process_pid "first stage"
     #tar -C mnt/ -xf ubuntu-base-18.04.3-base-armhf.tar
     cp /usr/bin/qemu-arm-static mnt/usr/bin
-    echo_green "debootstrap: Done!"
+    echo_ok "debootstrap: Done!"
 
 }
 
 # This function configure the system: adding the default user, set the root
 # password, install the packages...
 function configuration() {
-    echo_yellow "Starting configuration..."
+    echo_i "Starting configuration..."
     # Edit the hostname file
     chroot mnt/ /bin/bash -c "echo \"$HOSTNAME\" > /etc/hostname"
 
@@ -93,18 +96,21 @@ function configuration() {
     install_packages >> out.log 2>&1 &
     process_pid=$!
     progress_bar $process_pid "install packages"
-
-    echo_yellow "Adding resizefs"
+    
+    echo_i "Adding resizefs"
     install -m 755 patches/firstrun  "mnt/etc/init.d"
-    chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults 2>&1 >/dev/null"
+    chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults > /dev/null 2>&1"
     cp patches/g_multi_setup.sh mnt/etc/rc.local
     chmod +x mnt/etc/rc.local
+
+    echo_i "Configuring Network ..."
+    cp patches/network_interface mnt/etc/network/interfaces
 
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
     set_user
 
-    echo_green "Configuration complete!"
+    echo_ok "Configuration complete!"
 }
 
 
@@ -125,18 +131,24 @@ function clean() {
 
 ################################################################################
 function main() {
+    checkroot
     # Configuration
     local OUTPUT="udoobuntu-udoo_neo-18.04_$(date +%Y%m%d-%H%M).img"
     local LOOP=$(losetup -f)
 
-    echo_yellow "Starting build..."
+    echo_i "Check dependencies..."
+    check_dependencies "debootstrap"
+    check_dependencies "qemu-arm-static"
+    exit 2
 
     check_env
     trap "clean $LOOP" INT TERM KILL
+
+    echo_i "Starting build..."
     bootstrap $OUTPUT $LOOP
     configuration
 
-    echo_green "Build complete!"
+    echo_ok "Build complete!"
 }
 
 main $@
