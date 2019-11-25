@@ -31,10 +31,16 @@ function check_env() {
 # The first stage is the function that do the initial operation such as:
 # creating partitions, upload the bootloader, ...
 # Many of its operation are taken from ../include/imager.sh
-function first_stage() {
+function bootstrap() {
     # Read arguments
     local OUTPUT=$1
     local LOOP=$2
+    export LANG=C
+    export LC_ALL=C
+    export LANGUAGE=C
+    export DEBIAN_PRIORITY=critical
+    export DEBIAN_FRONTEND=noninteractive
+    export DEBCONF_NONINTERACTIVE_SEEN=true
 
     echo_yellow "Starting setup"
 
@@ -59,43 +65,15 @@ function first_stage() {
 
     echo_green "Setup complete!"
 
-    # Debootstrap - first_stage
-    echo "Starting debootstrap - first stage..."
-    debootstrap --foreign --arch=armhf --verbose bionic mnt/ 2>&1 > out.log &
+    # Debootstrap
+    echo "Starting debootstrap ..."
+    qemu-debootstrap --arch=armhf --verbose bionic mnt/ 2>&1 > out.log &
     local process_pid=$!
     progress_bar $process_pid "first stage"
     #tar -C mnt/ -xf ubuntu-base-18.04.3-base-armhf.tar
-    echo_green "debootstrap - first_stage: Done!"
-
-}
-
-
-# The second stage is the function that give the final configuration to
-# the image file. An important operation is the debootstrap operaion executed
-# in chroot.
-function second_stage() {
-    echo_yellow "Starting second-stage"
-
-    # Copy the qemu file
     cp /usr/bin/qemu-arm-static mnt/usr/bin
+    echo_green "debootstrap: Done!"
 
-    # Change root and run the second stage
-    chroot mnt/ /bin/bash 2>&1 >> out.log & << 'EOF'
-#!/bin/bash
-export LC_ALL=C
-export LANGUAGE=C
-export LANG=C
-export DEBIAN_FRONTEND=noninteractive
-export DEBIAN_PRIORITY=critical
-export DEBCONF_NONINTERACTIVE_SEEN=true
-
-/debootstrap/debootstrap --second-stage
-EOF
-
-    local process_pid=$!
-    progress_bar $process_pid "second stage"
-
-    echo_green "Debootstrap second-stage completed!"
 }
 
 # This function configure the system: adding the default user, set the root
@@ -115,7 +93,7 @@ function configuration() {
     install_packages >> out.log 2>&1 &
     process_pid=$!
     progress_bar $process_pid "install packages"
-    
+
     echo_yellow "Adding resizefs"
     install -m 755 patches/firstrun  "mnt/etc/init.d"
     chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults 2>&1 >/dev/null"
@@ -155,8 +133,7 @@ function main() {
 
     check_env
     trap "clean $LOOP" INT TERM KILL
-    first_stage $OUTPUT $LOOP
-    second_stage $OUTPUT $LOOP
+    bootstrap $OUTPUT $LOOP
     configuration
 
     echo_green "Build complete!"
