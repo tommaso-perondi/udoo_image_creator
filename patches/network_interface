@@ -1,0 +1,9 @@
+# UDOO NEO Minimal conf
+
+auto eth0
+
+# USB OTG connection
+allow-hotplug usb0
+iface usb0 inet static
+address 192.168.7.2
+netmask 255.255.255.252

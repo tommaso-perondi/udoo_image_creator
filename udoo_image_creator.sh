@@ -8,10 +8,15 @@ source "$DIR_MKUDOOBUNTU/include/imager.sh"
 source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
 source "$DIR_MKUDOOBUNTU/include/set_user_and_root.sh"
 source "$DIR_MKUDOOBUNTU/include/packages.sh"
-source "$DIR_MKUDOOBUNTU/include/utils/color.sh"
 source "$DIR_MKUDOOBUNTU/include/utils/utils.sh"
+source "$DIR_MKUDOOBUNTU/include/utils/prints.sh"
 source "$DIR_MKUDOOBUNTU/configure/udoo_neo.sh"
 ################################################################################
+
+PRINTS_DEBUG=1
+PRINTS_VERBOSE=1
+
+
 
 # The first stage is the function that do the initial operation such as:
 # creating partitions, upload the bootloader, ...
@@ -21,12 +26,12 @@ function first_stage() {
     local OUTPUT=$1
     local LOOP=$2
 
-    echo_yellow "Starting setup"
+    echo_i "Starting setup"
 
     # Create the empty image file - 4GB
-    echo "Creating the image file $OUTPUT..."
-    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G
-    echo_green "Image created!"
+    echo_i "Creating the image file $OUTPUT..."
+    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G 2>&1 > /dev/null
+    echo_ok "Image created!"
     # Associate loop-device with .img file
     losetup $LOOP $OUTPUT || echo_red "Cannot set $LOOP"
 
@@ -42,16 +47,15 @@ function first_stage() {
     mkdir mnt/boot/
     write_kernel $OUTPUT $LOOP
 
-    echo_green "Setup complete!"
+    echo_ok "Setup complete!"
 
     # Debootstrap - first_stage
-    echo "Starting debootstrap - first stage..."
+    echo_i "Starting debootstrap - first stage..."
     debootstrap --foreign --arch=armhf --verbose bionic mnt/ 2>&1 > out.log &
     local process_pid=$!
     progress_bar $process_pid "first stage"
     #tar -C mnt/ -xf ubuntu-base-18.04.3-base-armhf.tar
-    echo_green "debootstrap - first_stage: Done!"
-
+    echo_ok "debootstrap - first_stage: Done!"
 }
 
 
@@ -59,7 +63,7 @@ function first_stage() {
 # the image file. An important operation is the debootstrap operaion executed
 # in chroot.
 function second_stage() {
-    echo_yellow "Starting second-stage"
+    echo_i "Starting second-stage"
 
     # Copy the qemu file
     cp $DIR_MKUDOOBUNTU/source/qemu-arm/qemu-arm-static mnt/usr/bin
@@ -69,13 +73,13 @@ function second_stage() {
     local process_pid=$!
     progress_bar $process_pid "second stage"
 
-    echo_green "Debootstrap second-stage completed!"
+    echo_ok "Debootstrap second-stage completed!"
 }
 
 # This function configure the system: adding the default user, set the root
 # password, install the packages...
 function configuration() {
-    echo_yellow "Starting configuration..."
+    echo_i "Starting configuration..."
     # Edit the hostname file
     chroot mnt/ /bin/bash -c "echo \"$HOSTNAME\" > /etc/hostname"
 
@@ -90,19 +94,19 @@ function configuration() {
     process_pid=$!
     progress_bar $process_pid "install packages"
     
-    echo_yellow "Adding resizefs"
+    echo_i "Adding resizefs"
     install -m 755 patches/firstrun  "mnt/etc/init.d"
-    chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults 2>&1 >/dev/null"
+    chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults > /dev/null 2>&1"
     cp patches/g_multi_setup.sh mnt/etc/rc.local
     chmod +x mnt/etc/rc.local
-
-
+    echo_i "Configuring Network ..."
+    cp patches/network_interface mnt/etc/network/interfaces
 
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
     set_user
 
-    echo_green "Configuration complete!"
+    echo_ok "Configuration complete!"
 }
 
 
@@ -118,18 +122,23 @@ function final_operations() {
 
 ################################################################################
 function main() {
+    checkroot
     # Configuration
     local OUTPUT="udoobuntu-udoo_neo-18.04_$(date +%Y%m%d-%H%M).img"
     local LOOP=$(losetup -f)
 
-    echo_yellow "Starting build..."
+    echo_i "Check dependencies..."
+    check_dependencies "debootstrap"
+    check_dependencies "qemu-arm-static"
+    exit 2
 
+    echo_i "Starting build..."
     first_stage $OUTPUT $LOOP
     second_stage $OUTPUT $LOOP
     configuration
     final_operations $LOOP
 
-    echo_green "Build complete!"
+    echo_ok "Build complete!"
 }
 
 main $@
