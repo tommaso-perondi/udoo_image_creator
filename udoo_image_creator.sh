@@ -136,10 +136,10 @@ function main() {
     local LOOP=$(losetup -f)
 
     echo_i "Check dependencies..."
+    check_env
     check_dependencies "debootstrap"
     check_dependencies "qemu-arm-static"
 
-    check_env
     trap "clean $LOOP" INT TERM KILL
 
     echo_i "Starting build..."
