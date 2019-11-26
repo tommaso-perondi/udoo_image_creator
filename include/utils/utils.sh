@@ -28,7 +28,7 @@ function check_dependencies()
     else
         echo_e "$prog not found"
         exit 1
-  fi
+    fi
 }
 
 function progress_bar()

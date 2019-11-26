@@ -7,13 +7,12 @@ set -e
 DIR_MKUDOOBUNTU=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 REQUIRED_HOST_PKG=( qemu-user-static qemu-user debootstrap )
 cd $DIR_MKUDOOBUNTU
-source "include/imager.sh"
-source "include/utils/color.sh"
-source "include/set_user_and_root.sh"
-source "include/packages.sh"
-source "include/utils/color.sh"
-source "include/utils/utils.sh"
 source "configure/udoo_neo.sh"
+source "include/imager.sh"
+source "include/packages.sh"
+source "include/set_user_and_root.sh"
+source "include/utils/prints.sh"
+source "include/utils/utils.sh"
 cd -
 ################################################################################
 
@@ -96,7 +95,7 @@ function configuration() {
     install_packages >> out.log 2>&1 &
     process_pid=$!
     progress_bar $process_pid "install packages"
-    
+
     echo_i "Adding resizefs"
     install -m 755 patches/firstrun  "mnt/etc/init.d"
     chroot "mnt/" /bin/bash -c "update-rc.d firstrun defaults > /dev/null 2>&1"
@@ -139,7 +138,6 @@ function main() {
     echo_i "Check dependencies..."
     check_dependencies "debootstrap"
     check_dependencies "qemu-arm-static"
-    exit 2
 
     check_env
     trap "clean $LOOP" INT TERM KILL
