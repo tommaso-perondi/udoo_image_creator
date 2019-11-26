@@ -25,8 +25,7 @@ function add_source_list() {
 function add_docker_repo(){
     echo_i "Adding new Docker repository"
     chroot mnt/ /bin/bash <<EOF
-gpg-agent
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg > /etc/apt/trusted.gpg.d/docker.gpg
 echo '${DOCKERREPO}' >> /etc/apt/sources.list
 apt-get update -y -qq
 EOF
