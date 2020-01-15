@@ -48,7 +48,7 @@ function bootstrap() {
 
     # Create the empty image file - 4GB
     echo_i "Creating the image file $OUTPUT..."
-    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=3G 2>&1 > /dev/null
+    dd if=/dev/zero of=$OUTPUT bs=1 count=0 seek=4G 2>&1 > /dev/null
     echo_ok "Image created!"
     # Associate loop-device with .img file
     losetup $LOOP $OUTPUT || echo_red "Cannot set $LOOP"
@@ -108,6 +108,9 @@ function configuration() {
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
     set_user
+    
+    echo_i "Installing SECO MMC Flasher"
+    install_flasher
 
     echo_ok "Configuration complete!"
 }

@@ -15,21 +15,12 @@ export LANGUAGE=C
 export LANG=C
 export DEBIAN_PRIORITY=critical
 export DEBCONF_NONINTERACTIVE_SEEN=true"
-DOCKERREPO='deb [arch=armhf] https://download.docker.com/linux/ubuntu bionic stable'
 
 function add_source_list() {
     echo_i "Adding source list"
     install -m 644 $DIR_PACKAGES/../configure/sources.list "mnt/etc/apt/sources.list"
 }
 
-function add_docker_repo(){
-    echo_i "Adding new Docker repository"
-    chroot mnt/ /bin/bash <<EOF
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg > /etc/apt/trusted.gpg.d/docker.gpg
-echo '${DOCKERREPO}' >> /etc/apt/sources.list
-apt-get update -y -qq
-EOF
-}
 
 function set_locales(){
     echo_i "Setup Locale"
@@ -47,19 +38,23 @@ function install_packages() {
     chroot mnt/ /bin/bash -c "apt-get upgrade -y"
 
     # # Packages list
-    local base_packages="openssh-server ifupdown haveged policykit-1 curl iw module-init-tools ntp unzip usbutils wireless-tools wget wpasupplicant sysfsutils git i2c-tools python3-pip manpages wireless-regdb net-tools ca-certificates gnupg-agent linux-firmware vim"
+    local base_packages="openssh-server ifupdown haveged policykit-1 curl iw module-init-tools ntp unzip usbutils wireless-tools wget wpasupplicant sysfsutils wireless-regdb net-tools ca-certificates gnupg-agent linux-firmware vim parted"
 
     echo_i "Installing basic packages..."
     chroot mnt/ /bin/bash <<EOF
 ${EXPORTS}
 ${ROOTFS_CMD_APT_INSTALL} $base_packages
+    apt-get purge --auto-remove snap linux-firmware -y
+    apt-get autoclean
+    apt-get autoremove
+    apt clean -y
+    rm /var/lib/apt/lists/* -r
+	
 EOF
-    #Docker
-    add_docker_repo
-    echo_i "Installing docker packages"
-    local docker_packages="docker-ce docker-ce-cli docker-compose"
-    chroot mnt/ /bin/bash <<EOF
-${EXPORTS}
-${ROOTFS_CMD_APT_INSTALL} $docker_packages
-EOF
+}
+function install_flasher() {
+    cp sources/script/seco-mmcflash.sh mnt/root/
+    chmod +x mnt/root/seco-mmcflash.sh
+    cp sources/script/seco-mmcflash.service mnt/lib/systemd/system/
+    chroot mnt/ /bin/bash "systemctl enable seco-mmcflash.service"
 }

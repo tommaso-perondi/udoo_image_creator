@@ -1,0 +1,10 @@
+[Unit]
+Description=SECO MMC Flasher
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/seco-mmcflash.sh
+
+[Install]
+WantedBy=multi-user.target
