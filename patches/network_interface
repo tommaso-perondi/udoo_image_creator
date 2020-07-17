@@ -1,0 +1,10 @@
+# UDOO NEO Minimal conf
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    eth0:
+      dhcp4: true
+    usb0:
+      addresses:
+        - 10.10.10.2/31
