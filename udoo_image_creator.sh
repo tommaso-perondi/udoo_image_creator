@@ -47,7 +47,6 @@ function bootstrap() {
     export DEBCONF_NONINTERACTIVE_SEEN=true
 
     echo_i "Starting setup"
-
     echo_i "Starting debootstrap ..."
     qemu-debootstrap --arch=armhf --verbose focal "$MNTDIR" 2>&1 > out.log &
     local process_pid=$!
@@ -136,6 +135,9 @@ function main() {
     check_env
     check_dependencies "debootstrap"
     check_dependencies "qemu-arm-static"
+
+    #Create mount directory
+    mkdir -p "$MNTDIR"
     create_image
 
     trap "clean $LOOP" INT TERM KILL
@@ -143,7 +145,8 @@ function main() {
     echo_i "Starting build..."
     bootstrap $OUTPUT $LOOP
     configuration
-
+    echo_ok "Cleaning up"
+    clean $LOOP
     echo_ok "Build complete!"
 }
 
