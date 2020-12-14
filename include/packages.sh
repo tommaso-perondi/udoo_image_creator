@@ -52,7 +52,7 @@ function install_services() {
 
     echo_i "Installting usb gadget service"
     cp "patches/gadget.sh" "${MNTDIR}/usr/local/sbin/gadget.sh"
-    cp "patches/gadget.service" "${MNTDIR}/etc/systemd/system/gadget.sh"
-    ln -s "${MNTDIR}/etc/systemd/system/gadget.sh" "${MNTDIR}/etc/systemd/system/default.target.wants/gadget.service"
+    cp "patches/gadget.service" "${MNTDIR}/etc/systemd/system/gadget.service"
+    ln -s "${MNTDIR}/etc/systemd/system/gadget.service" "${MNTDIR}/etc/systemd/system/default.target.wants/gadget.service"
 
 }
