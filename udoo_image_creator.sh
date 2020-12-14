@@ -81,8 +81,6 @@ function configuration() {
     echo_i "Adding resizefs"
     install -m 755 patches/firstrun  "./${MNTDIR}/etc/init.d"
     chroot "${MNTDIR}/" /bin/bash -c "update-rc.d firstrun defaults > /dev/null 2>&1"
-    cp patches/g_multi_setup.sh "./${MNTDIR}/etc/rc.local"
-    chmod +x "./${MNTDIR}/etc/rc.local"
 
     echo_i "Configuring Network ..."
     cp patches/network_interface "./${MNTDIR}/etc/netplan/01-network-manager-all.yaml"
