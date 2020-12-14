@@ -1,0 +1,9 @@
+[Unit]
+Description=Ethernet over USB gadget Service
+
+[Service]
+type=oneshot
+ExecStart=/bin/sh /usr/local/sbin/gadget.sh
+
+[Install]
+WantedBy=default.target

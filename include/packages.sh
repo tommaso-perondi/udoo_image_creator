@@ -46,3 +46,13 @@ ${EXPORTS}
 ${ROOTFS_CMD_APT_INSTALL} $base_packages
 EOF
 }
+
+function install_services() {
+    echo_i "Installing services"
+
+    echo_i "Installting usb gadget service"
+    cp "patches/gadget.sh" "${MNTDIR}/usr/local/sbin/gadget.sh"
+    cp "patches/gadget.service" "${MNTDIR}/etc/systemd/system/gadget.sh"
+    ln -s "${MNTDIR}/etc/systemd/system/gadget.sh" "${MNTDIR}/etc/systemd/system/default.target.wants/gadget.service"
+
+}

@@ -86,6 +86,10 @@ function configuration() {
 
     echo_i "Configuring Network ..."
     cp patches/network_interface "./${MNTDIR}/etc/netplan/01-network-manager-all.yaml"
+    
+    #Installing needed services
+    install_services
+    
     # Setup the user and root - from include/set_user_and_root.sh
     set_root
     set_user
