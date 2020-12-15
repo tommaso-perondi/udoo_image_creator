@@ -2,7 +2,7 @@
 
 HOST="48:6f:73:74:50:43"
 SELF="48:6f:73:59:39:C4"
-IP='192.168.7.1'
+IP='192.168.7.2'
 
 
 cd /sys/kernel/config/usb_gadget/
@@ -63,5 +63,8 @@ ls /sys/class/udc > UDC
 #Bring network interface up
 ifconfig usb0 up $IP
 
+#Enable and start udhcpd server
+systemctl enable udhcpd
+systemctl start udhcpd
 #Bring up serial console
 exec /sbin/getty -L /dev/ttyGS0 115200 vt100

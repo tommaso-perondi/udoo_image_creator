@@ -1,3 +1,4 @@
 rootfs/
 mnt/
 *.log
+*.img

@@ -84,7 +84,7 @@ function configuration() {
 
     echo_i "Configuring Network ..."
     cp patches/network_interface "./${MNTDIR}/etc/netplan/01-network-manager-all.yaml"
-    
+    cp patches/udhcpd.conf "${MNTDIR}/etc/udhcpd.conf" 
     #Installing needed services
     install_services
     
@@ -108,7 +108,6 @@ function create_image(){
     write_bootloader $OUTPUT $LOOP
     echo_e "$LOOP $MNTDIR"
     mount "${LOOP}p1" $MNTDIR
-    read -p "Press any key to resume ..."
 }
 
 function clean() {
