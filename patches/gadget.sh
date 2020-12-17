@@ -63,8 +63,5 @@ ls /sys/class/udc > UDC
 #Bring network interface up
 ifconfig usb0 up $IP
 
-#Enable and start udhcpd server
-systemctl enable udhcpd
-systemctl start udhcpd
 #Bring up serial console
 exec /sbin/getty -L /dev/ttyGS0 115200 vt100

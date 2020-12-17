@@ -84,7 +84,8 @@ function configuration() {
 
     echo_i "Configuring Network ..."
     cp patches/network_interface "./${MNTDIR}/etc/netplan/01-network-manager-all.yaml"
-    cp patches/udhcpd.conf "${MNTDIR}/etc/udhcpd.conf" 
+    cp patches/dhcpd.conf "${MNTDIR}/etc/dhcp/dhcpd.conf"
+    ln -s /lib/systemd/system/isc-dhcp-server.service /etc/systemd/system/multi-user.target.wants/isc-dhcp-server.service
     #Installing needed services
     install_services
     
